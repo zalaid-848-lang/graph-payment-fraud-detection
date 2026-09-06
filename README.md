@@ -41,7 +41,9 @@ flowchart LR
 - [x] Chronological train/validation/test assignment with 24-hour purge gaps
 - [x] Dataset manifest with row counts, fraud prevalence, split counts, and SHA-256 checksum
 - [x] Focused tests for schema, deterministic generation, IEEE mapping, and temporal separation
-- [ ] Rules and tabular baselines (Day 2)
+- [x] Data-quality report, rules baseline, and leakage-safe tabular baseline (Day 2)
+- [x] Capacity-aware evaluation and reproducible Day 2 experiment report
+- [ ] Entity-link graph construction (Day 3)
 
 ## Repository layout
 
@@ -52,8 +54,11 @@ graph-payment-fraud-detection/
 ├── docs/
 │   ├── data_dictionary.md
 │   └── validation_plan.md
-├── scripts/prepare_data.py
-├── src/fraud_detection/data/
+├── reports/day2_experiment.md
+├── scripts/
+│   ├── prepare_data.py
+│   └── run_day2.py
+├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
 ├── pyproject.toml
@@ -69,6 +74,7 @@ python -m venv .venv
 .venv\Scripts\Activate.ps1
 python -m pip install -e ".[dev]"
 python scripts/prepare_data.py --mode synthetic
+python scripts/run_day2.py
 python -m pytest
 ```
 
@@ -78,6 +84,14 @@ The preparation command writes:
 - `data/processed/manifest.json` — provenance and validation summary.
 
 All generated and raw data are ignored by Git.
+
+The Day 2 experiment writes machine-readable outputs under `artifacts/day2/` and a
+versioned, interview-friendly summary at
+[`reports/day2_experiment.md`](reports/day2_experiment.md). The current tabular
+baseline is a transparent regularized logistic regression implemented with NumPy;
+this avoids making the synthetic development path dependent on a heavyweight
+boosting library. LightGBM or XGBoost will be introduced for the graph-feature
+comparison after the core feature table exists.
 
 ## Add the real IEEE-CIS data later
 
@@ -141,4 +155,3 @@ Models will be compared on PR-AUC, precision and recall at a fixed investigation
 | 9 | Experiment report, model card, limitations and architecture polish |
 | 10 | Interview presentation, demo script and end-to-end reproducibility check |
 | 11–12 | Buffer; optional GraphSAGE/GAT only if the core is complete |
-

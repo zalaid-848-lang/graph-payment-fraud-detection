@@ -12,3 +12,15 @@ train_fraction = 0.60
 validation_fraction = 0.20
 purge_seconds = 86400
 
+[rules]
+high_amount_quantile = 0.95
+very_high_amount_quantile = 0.99
+
+[model]
+l2_strength = 0.10
+learning_rate = 0.10
+max_iterations = 5000
+tolerance = 1e-7
+
+[evaluation]
+investigation_capacity_fraction = 0.05

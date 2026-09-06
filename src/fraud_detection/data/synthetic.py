@@ -57,9 +57,8 @@ def generate_synthetic_transactions(n_rows: int = 500, seed: int = 42) -> pd.Dat
     frame.loc[ring_indices, "device_id"] = "device:ring_shared"
     frame.loc[ring_indices, "address_id"] = "address:ring_shared"
     frame.loc[ring_indices, "recipient_id"] = "recipient:ring_shared"
-    frame.loc[ring_indices, "recipient_email_domain"] = "ring-merchant.example"
     frame.loc[ring_indices, "amount"] = np.round(
-        rng.uniform(350.0, 1_250.0, size=ring_size), 2
+        rng.uniform(80.0, 400.0, size=ring_size), 2
     )
     frame.loc[ring_indices, "is_fraud"] = 1
 
