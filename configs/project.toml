@@ -18,9 +18,9 @@ very_high_amount_quantile = 0.99
 
 [model]
 l2_strength = 0.10
-learning_rate = 0.10
 max_iterations = 5000
 tolerance = 1e-7
+random_seed = 42
 
 [evaluation]
 investigation_capacity_fraction = 0.05

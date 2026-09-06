@@ -71,12 +71,17 @@ Python 3.11 or newer is recommended.
 
 ```powershell
 python -m venv .venv
-.venv\Scripts\Activate.ps1
+. .\scripts\activate_windows.ps1
 python -m pip install -e ".[dev]"
 python scripts/prepare_data.py --mode synthetic
 python scripts/run_day2.py
 python -m pytest
 ```
+
+On Windows, `activate_windows.ps1` activates the project virtual environment and
+redirects temporary installation files and the pip cache into ignored directories
+inside the project. This keeps dependency installation on the same drive as the
+repository when drive C has limited free space.
 
 The preparation command writes:
 
@@ -88,10 +93,10 @@ All generated and raw data are ignored by Git.
 The Day 2 experiment writes machine-readable outputs under `artifacts/day2/` and a
 versioned, interview-friendly summary at
 [`reports/day2_experiment.md`](reports/day2_experiment.md). The current tabular
-baseline is a transparent regularized logistic regression implemented with NumPy;
-this avoids making the synthetic development path dependent on a heavyweight
-boosting library. LightGBM or XGBoost will be introduced for the graph-feature
-comparison after the core feature table exists.
+baseline is a transparent, class-balanced logistic regression implemented as a
+scikit-learn `Pipeline`, with preprocessing fitted only on the training period.
+LightGBM or XGBoost will be introduced for the graph-feature comparison after the
+core feature table exists.
 
 ## Add the real IEEE-CIS data later
 

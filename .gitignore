@@ -9,6 +9,8 @@ htmlcov/
 .ruff_cache/
 .venv/
 venv/
+.tmp/
+.pip-cache/
 
 # Editors and operating systems
 .idea/
@@ -34,4 +36,3 @@ wandb/
 .streamlit/secrets.toml
 .env
 .env.*
-

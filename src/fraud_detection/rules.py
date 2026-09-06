@@ -19,7 +19,7 @@ class RulesBaseline:
     high_amount_quantile: float = 0.95
     very_high_amount_quantile: float = 0.99
 
-    def fit(self, frame: pd.DataFrame) -> "RulesBaseline":
+    def fit(self, frame: pd.DataFrame) -> RulesBaseline:
         if not 0 < self.high_amount_quantile < self.very_high_amount_quantile < 1:
             raise ValueError("Amount quantiles must satisfy 0 < high < very_high < 1")
         self.high_amount_threshold_ = float(frame["amount"].quantile(self.high_amount_quantile))
@@ -65,4 +65,3 @@ class RulesBaseline:
                 reasons.append("recipient_unseen_in_training")
             results.append(";".join(reasons) if reasons else "no_rule_triggered")
         return results
-

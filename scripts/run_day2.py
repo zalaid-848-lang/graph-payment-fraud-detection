@@ -62,8 +62,9 @@ def _render_report(
         "## Executive summary",
         "",
         "This report establishes two pre-graph benchmarks: a transparent rules score and a "
-        "regularized tabular logistic-regression score. All fitting uses only the training period; "
-        "validation selects operating thresholds; test labels are used only for final evaluation.",
+        "regularized scikit-learn logistic-regression score. All fitting uses only the training "
+        "period; validation selects operating thresholds; test labels are used only for final "
+        "evaluation.",
         "",
     ]
     if source == "synthetic":
@@ -82,8 +83,10 @@ def _render_report(
             "",
             f"- Investigation capacity: `{_percent(metrics['capacity_fraction'])}` of transactions",
             "- Rules: high/very-high amount plus device or recipient unseen in training",
-            "- Tabular features: log amount, entity-availability flags, product code, and payer/recipient "
-            "email-domain categories",
+            "- Tabular pipeline: train-fitted encoding, class-balanced scikit-learn logistic "
+            "regression, and deterministic configuration",
+            "- Tabular features: log amount, entity-availability flags, product code, and "
+            "payer/recipient email-domain categories",
             "- Direct transaction/entity identifiers and target aliases are excluded",
             "- Purge-window rows are excluded from training, threshold selection, and testing",
             "",
@@ -111,14 +114,16 @@ def _render_report(
             "## Investigator-volume comparison",
             "",
             f"At their separate validation-selected thresholds, the tabular model emits "
-            f"`{_percent(threshold_change)}` fewer test alerts than the rules baseline. Its recall at "
+            f"`{_percent(threshold_change)}` fewer test alerts than the rules baseline. "
+            "Its recall at "
             f"that point is `{_percent(tabular['threshold_operating_point']['recall'])}`, versus "
             f"`{_percent(rules['threshold_operating_point']['recall'])}` for the rules, so the raw "
             "volume change must not be presented as an efficiency gain.",
             "",
-            f"At matched recall (`{_percent(matched['target_recall'])}`), the tabular ranking needs "
-            f"`{matched['tabular_alert_count']}` alerts versus `{matched['rules_alert_count']}` rule "
-            f"alerts: an alert-volume reduction of `{_percent(matched['alert_volume_reduction'])}`. "
+            f"At matched recall (`{_percent(matched['target_recall'])}`), the tabular ranking "
+            f"needs `{matched['tabular_alert_count']}` alerts versus "
+            f"`{matched['rules_alert_count']}` rule alerts: an alert-volume reduction of "
+            f"`{_percent(matched['alert_volume_reduction'])}`. "
             "A negative value means the model needs more reviews to match the rules.",
             "These are project-scenario measurements, not a bank policy recommendation.",
             "",
@@ -137,9 +142,11 @@ def _render_report(
             "",
             "## Day 2 conclusion",
             "",
-            "The project now has a fair, reproducible pre-graph benchmark. Day 3 will construct the "
+            "The project now has a fair, reproducible pre-graph benchmark. Day 3 will "
+            "construct the "
             "historical entity-link graph and test that missing values never create false links. "
-            "Only after those integrity checks will graph features be compared against these baselines.",
+            "Only after those integrity checks will graph features be compared against "
+            "these baselines.",
             "",
             "## Limitations",
             "",
@@ -226,9 +233,10 @@ def run() -> tuple[dict[str, Any], Path]:
             "alert_volume_reduction": matched_reduction,
         },
         "tabular_training": {
-            "iterations": tabular.model_.iterations_,
-            "converged": tabular.model_.converged_,
-            "training_loss": tabular.model_.training_loss_,
+            "library": "scikit-learn",
+            "iterations": tabular.iterations_,
+            "converged": tabular.converged_,
+            "weighted_log_loss": tabular.training_loss_,
             "feature_count": len(tabular.encoder_.feature_names_),
         },
         "strongest_coefficients": tabular.strongest_coefficients(),

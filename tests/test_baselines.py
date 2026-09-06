@@ -1,6 +1,8 @@
 import unittest
 
 import numpy as np
+from sklearn.linear_model import LogisticRegression
+from sklearn.pipeline import Pipeline
 
 from fraud_detection.data.split import assign_temporal_splits
 from fraud_detection.data.synthetic import generate_synthetic_transactions
@@ -30,6 +32,9 @@ class BaselineTests(unittest.TestCase):
         self.assertTrue(((scores >= 0) & (scores <= 1)).all())
         self.assertGreater(average_precision(self.test["is_fraud"].to_numpy(), scores), 0.0)
         self.assertFalse(any(name.endswith("_id") for name in model.encoder_.feature_names_))
+        self.assertIsInstance(model.pipeline_, Pipeline)
+        self.assertIsInstance(model.classifier_, LogisticRegression)
+        self.assertTrue(model.converged_)
 
     def test_feature_audit_rejects_targets_and_identifiers(self) -> None:
         with self.assertRaisesRegex(ValueError, "Forbidden model features"):
@@ -38,4 +43,3 @@ class BaselineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
