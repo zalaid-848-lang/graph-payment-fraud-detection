@@ -43,7 +43,9 @@ flowchart LR
 - [x] Focused tests for schema, deterministic generation, IEEE mapping, and temporal separation
 - [x] Data-quality report, rules baseline, and leakage-safe tabular baseline (Day 2)
 - [x] Capacity-aware evaluation and reproducible Day 2 experiment report
-- [ ] Entity-link graph construction (Day 3)
+- [x] Typed entity-link graph construction and integrity audit (Day 3)
+- [x] Causal same-time batching and missing-entity safeguards
+- [ ] Historical graph feature engineering (Day 4)
 
 ## Repository layout
 
@@ -53,11 +55,15 @@ graph-payment-fraud-detection/
 ├── data/{raw,interim,processed}/
 ├── docs/
 │   ├── data_dictionary.md
+│   ├── graph_schema.md
 │   └── validation_plan.md
-├── reports/day2_experiment.md
+├── reports/
+│   ├── day2_experiment.md
+│   └── day3_graph_construction.md
 ├── scripts/
 │   ├── prepare_data.py
-│   └── run_day2.py
+│   ├── run_day2.py
+│   └── run_day3.py
 ├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
@@ -75,6 +81,7 @@ python -m venv .venv
 python -m pip install -e ".[dev]"
 python scripts/prepare_data.py --mode synthetic
 python scripts/run_day2.py
+python scripts/run_day3.py
 python -m pytest
 ```
 

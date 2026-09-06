@@ -24,3 +24,6 @@ random_seed = 42
 
 [evaluation]
 investigation_capacity_fraction = 0.05
+
+[graph]
+include_purge_rows_in_unlabelled_history = true
