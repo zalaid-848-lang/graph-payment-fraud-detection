@@ -1,0 +1,37 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+
+# Editors and operating systems
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Raw and generated data (keep only directory placeholders)
+data/raw/**
+!data/raw/.gitkeep
+data/interim/**
+!data/interim/.gitkeep
+data/processed/**
+!data/processed/.gitkeep
+
+# Model and experiment artifacts
+artifacts/**
+!artifacts/.gitkeep
+mlruns/
+wandb/
+
+# Streamlit secrets and local environment
+.streamlit/secrets.toml
+.env
+.env.*
+

@@ -1,0 +1,14 @@
+[project]
+name = "graph-payment-fraud-detection"
+seed = 42
+
+[data]
+raw_dir = "data/raw/ieee-cis"
+processed_file = "data/processed/transactions.csv"
+synthetic_rows = 500
+
+[validation]
+train_fraction = 0.60
+validation_fraction = 0.20
+purge_seconds = 86400
+
