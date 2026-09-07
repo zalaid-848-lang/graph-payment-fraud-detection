@@ -51,7 +51,9 @@ flowchart LR
 - [x] Fair rules/tabular/tabular-plus-graph model comparison
 - [x] Deterministic LightGBM graph-feature candidate (Day 6)
 - [x] Exhaustive post-test error slices at fixed investigation capacity
-- [ ] SHAP explanations and investigator reason codes (Day 7)
+- [x] Fidelity-checked SHAP explanations for the selected model (Day 7)
+- [x] Evidence-gated investigator reason codes and review-only recommendations
+- [ ] Investigator-facing Streamlit dashboard (Day 8)
 
 ## Repository layout
 
@@ -65,20 +67,23 @@ graph-payment-fraud-detection/
 │   ├── graph_schema.md
 │   ├── error_analysis.md
 │   ├── label_history_features.md
+│   ├── reason_codes.md
 │   └── validation_plan.md
 ├── reports/
 │   ├── day2_experiment.md
 │   ├── day3_graph_construction.md
 │   ├── day4_graph_features.md
 │   ├── day5_model_comparison.md
-│   └── day6_boosted_error_analysis.md
+│   ├── day6_boosted_error_analysis.md
+│   └── day7_explainability.md
 ├── scripts/
 │   ├── prepare_data.py
 │   ├── run_day2.py
 │   ├── run_day3.py
 │   ├── run_day4.py
 │   ├── run_day5.py
-│   └── run_day6.py
+│   ├── run_day6.py
+│   └── run_day7.py
 ├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
@@ -100,6 +105,7 @@ python scripts/run_day3.py
 python scripts/run_day4.py
 python scripts/run_day5.py
 python scripts/run_day6.py
+python scripts/run_day7.py
 python -m pytest
 ```
 
@@ -130,6 +136,10 @@ documented in the [Day 5 model comparison](reports/day5_model_comparison.md). Th
 candidate and post-test error slices. Reported numbers use synthetic development data
 and demonstrate pipeline behaviour—not expected performance at ICICI Bank or any other
 institution.
+
+The [Day 7 report](reports/day7_explainability.md) documents model selection, SHAP
+fidelity, and investigator reason-code coverage. The displayed scores are ranking
+scores rather than calibrated fraud probabilities.
 
 ## Add the real IEEE-CIS data later
 
