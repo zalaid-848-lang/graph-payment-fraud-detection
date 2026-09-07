@@ -14,6 +14,7 @@ Connected activity is described as a **suspected fraud ring**, never a confirmed
 - Only labels from the training split are eligible; validation, test, and purge labels are ignored by the label-history builder.
 - Structural features use only earlier transaction-time batches.
 - Graph scaling, tabular encoding, class weighting, and model fitting use training rows only.
+- PageRank snapshot age is retained for audit but excluded from the model because refresh cadence is not a fraud behaviour.
 - Validation selects thresholds; test labels are used only for this final comparison.
 - Direct entity identifiers are excluded from every model matrix.
 
@@ -23,9 +24,9 @@ Connected activity is described as a **suspected fraud ring**, never a confirmed
 |---|---:|---:|---:|---:|---:|---:|
 | Rules only | 0.2976 | 60.00% | 37.50% | 2.63% | 12.50% | 37.50% |
 | Tabular logistic | 0.4989 | 60.00% | 37.50% | 2.63% | 12.50% | 37.50% |
-| Tabular + graph logistic | 0.8811 | 100.00% | 62.50% | 0.00% | 12.50% | 62.50% |
+| Tabular + graph logistic | 0.8935 | 100.00% | 62.50% | 0.00% | 12.50% | 62.50% |
 
-Adding graph context improved PR-AUC by `0.3822` and changed recall at the fixed capacity by `+25.00%` relative to the tabular model.
+Adding graph context improved PR-AUC by `0.3946` and changed recall at the fixed capacity by `+25.00%` relative to the tabular model.
 
 ## Alert-volume diagnostic at matched recall
 
@@ -47,7 +48,7 @@ The following alert counts result when each validation-selected threshold is app
 |---|---:|---:|---:|---:|
 | Rules only | 8 | 9.52% | 50.00% | 50.00% |
 | Tabular logistic | 3 | 3.57% | 66.67% | 25.00% |
-| Tabular + graph logistic | 5 | 5.95% | 100.00% | 62.50% |
+| Tabular + graph logistic | 3 | 3.57% | 100.00% | 37.50% |
 
 ## Strongest combined-model coefficients
 
@@ -55,18 +56,18 @@ Coefficients are associations after preprocessing, not causal explanations. Corr
 
 | Feature | Coefficient |
 |---|---:|
-| `log1p_standardized_matured_neighbor_label_count` | -3.6558 |
-| `log1p_standardized_historical_recipient_degree` | 3.4521 |
-| `log1p_standardized_specific_max_entity_degree` | -2.8075 |
-| `log1p_standardized_historical_recipient_email_domain_degree` | 2.0328 |
-| `log1p_standardized_specific_max_component_nodes` | -1.8668 |
-| `log1p_standardized_graph_known_entity_count` | 1.7916 |
-| `log1p_standardized_specific_known_entity_count` | 1.7868 |
-| `recipient_email_domain=services.example` | -1.6597 |
-| `log1p_standardized_historical_address_degree` | 1.5235 |
-| `log1p_standardized_specific_mean_pagerank` | 1.2181 |
-| `log1p_standardized_historical_payer_email_domain_degree` | -1.1638 |
-| `log1p_standardized_graph_sum_entity_degree` | -1.0414 |
+| `log1p_standardized_historical_recipient_degree` | 3.3361 |
+| `log1p_standardized_specific_max_entity_degree` | -3.2232 |
+| `log1p_standardized_matured_neighbor_label_count` | -2.8328 |
+| `log1p_standardized_historical_recipient_email_domain_degree` | 2.2415 |
+| `log1p_standardized_specific_max_component_nodes` | -1.8105 |
+| `recipient_email_domain=services.example` | -1.6742 |
+| `log1p_standardized_graph_known_entity_count` | 1.6508 |
+| `log1p_standardized_historical_address_degree` | 1.5253 |
+| `log1p_standardized_historical_payer_email_domain_degree` | -1.3409 |
+| `log1p_standardized_specific_known_entity_count` | 1.0276 |
+| `product_code=H` | 1.0268 |
+| `log1p_standardized_specific_mean_pagerank` | 0.9434 |
 
 ## Limitations and decision boundary
 

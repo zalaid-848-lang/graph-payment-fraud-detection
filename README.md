@@ -49,7 +49,9 @@ flowchart LR
 - [x] Hub-conscious components, PageRank, and clustering features
 - [x] Maturity-delayed, training-label-only neighbour features (Day 5)
 - [x] Fair rules/tabular/tabular-plus-graph model comparison
-- [ ] Boosted-tree candidate and error analysis (Day 6)
+- [x] Deterministic LightGBM graph-feature candidate (Day 6)
+- [x] Exhaustive post-test error slices at fixed investigation capacity
+- [ ] SHAP explanations and investigator reason codes (Day 7)
 
 ## Repository layout
 
@@ -61,19 +63,22 @@ graph-payment-fraud-detection/
 │   ├── data_dictionary.md
 │   ├── graph_feature_dictionary.md
 │   ├── graph_schema.md
+│   ├── error_analysis.md
 │   ├── label_history_features.md
 │   └── validation_plan.md
 ├── reports/
 │   ├── day2_experiment.md
 │   ├── day3_graph_construction.md
 │   ├── day4_graph_features.md
-│   └── day5_model_comparison.md
+│   ├── day5_model_comparison.md
+│   └── day6_boosted_error_analysis.md
 ├── scripts/
 │   ├── prepare_data.py
 │   ├── run_day2.py
 │   ├── run_day3.py
 │   ├── run_day4.py
-│   └── run_day5.py
+│   ├── run_day5.py
+│   └── run_day6.py
 ├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
@@ -94,6 +99,7 @@ python scripts/run_day2.py
 python scripts/run_day3.py
 python scripts/run_day4.py
 python scripts/run_day5.py
+python scripts/run_day6.py
 python -m pytest
 ```
 
@@ -118,10 +124,12 @@ Day 5 keeps the logistic classifier fixed for a controlled graph-feature ablatio
 A boosted-tree candidate will be introduced next, after the incremental graph signal
 has been measured without changing the classifier family.
 
-The current three-way results and the maturity-delayed neighbour-label contract are
-documented in the [Day 5 model comparison](reports/day5_model_comparison.md). Reported
-numbers use synthetic development data and demonstrate pipeline behaviour—not expected
-performance at ICICI Bank or any other institution.
+The controlled logistic ablation and maturity-delayed neighbour-label contract are
+documented in the [Day 5 model comparison](reports/day5_model_comparison.md). The
+[Day 6 report](reports/day6_boosted_error_analysis.md) adds a deterministic LightGBM
+candidate and post-test error slices. Reported numbers use synthetic development data
+and demonstrate pipeline behaviour—not expected performance at ICICI Bank or any other
+institution.
 
 ## Add the real IEEE-CIS data later
 

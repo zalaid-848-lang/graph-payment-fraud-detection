@@ -57,7 +57,15 @@ LABEL_HISTORY_FEATURE_COLUMNS = (
     "matured_neighbor_fraud_count",
     "matured_neighbor_fraud_ratio",
 )
-MODEL_GRAPH_FEATURE_COLUMNS = STRUCTURAL_FEATURE_COLUMNS + LABEL_HISTORY_FEATURE_COLUMNS
+MODEL_EXCLUDED_STRUCTURAL_COLUMNS = {"pagerank_snapshot_age_batches"}
+MODEL_GRAPH_FEATURE_COLUMNS = (
+    tuple(
+        column
+        for column in STRUCTURAL_FEATURE_COLUMNS
+        if column not in MODEL_EXCLUDED_STRUCTURAL_COLUMNS
+    )
+    + LABEL_HISTORY_FEATURE_COLUMNS
+)
 TARGET_COLUMN_ALIASES = {"is_fraud", "isFraud", "target", "label"}
 
 

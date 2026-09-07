@@ -28,7 +28,7 @@ graph and retain their own historical degree features.
 | `specific_mean_pagerank` | Mean lagged PageRank among linked specific entities |
 | `specific_max_clustering` | Maximum prior unweighted clustering coefficient in the specific-entity projection |
 | `specific_mean_clustering` | Mean prior clustering coefficient in the specific-entity projection |
-| `pagerank_snapshot_age_batches` | Number of chronological batches since the PageRank snapshot was refreshed |
+| `pagerank_snapshot_age_batches` | Number of chronological batches since the PageRank snapshot was refreshed; audit metadata excluded from current model matrices |
 | `historical_card_degree` | Earlier transactions using this card proxy |
 | `historical_customer_degree` | Earlier transactions using this customer proxy |
 | `historical_device_degree` | Earlier transactions using this device proxy |

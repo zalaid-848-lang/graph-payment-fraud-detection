@@ -6,6 +6,7 @@ from dataclasses import dataclass
 
 import numpy as np
 import pandas as pd
+from lightgbm import LGBMClassifier, early_stopping, log_evaluation
 from sklearn.base import BaseEstimator, TransformerMixin
 from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
@@ -214,3 +215,86 @@ class TabularGraphBaseline(TabularBaseline):
     def fit(self, frame: pd.DataFrame) -> TabularGraphBaseline:
         self._fit_with_encoder(frame, TabularGraphEncoder())
         return self
+
+
+@dataclass
+class LightGBMGraphModel:
+    """Deterministic boosted-tree candidate using the Day 5 combined feature matrix."""
+
+    n_estimators: int = 400
+    learning_rate: float = 0.03
+    num_leaves: int = 15
+    max_depth: int = 5
+    min_child_samples: int = 15
+    subsample: float = 1.0
+    colsample_bytree: float = 0.9
+    reg_lambda: float = 1.0
+    early_stopping_rounds: int = 40
+    random_seed: int = 42
+
+    def fit(self, train: pd.DataFrame, validation: pd.DataFrame) -> LightGBMGraphModel:
+        if self.n_estimators <= 0 or self.early_stopping_rounds <= 0:
+            raise ValueError("Boosting iteration settings must be positive")
+        if self.learning_rate <= 0 or self.num_leaves <= 1 or self.min_child_samples <= 0:
+            raise ValueError("Boosting learning and tree settings are invalid")
+        if not 0 < self.subsample <= 1 or not 0 < self.colsample_bytree <= 1:
+            raise ValueError("Boosting sampling fractions must be in (0, 1]")
+        if self.reg_lambda < 0:
+            raise ValueError("reg_lambda must be non-negative")
+
+        train_target = train["is_fraud"].to_numpy(dtype=int)
+        validation_target = validation["is_fraud"].to_numpy(dtype=int)
+        if set(np.unique(train_target)) != {0, 1}:
+            raise ValueError("Training target must contain both 0 and 1")
+        if set(np.unique(validation_target)) != {0, 1}:
+            raise ValueError("Validation target must contain both 0 and 1")
+
+        self.encoder_ = TabularGraphEncoder().fit(train, train["is_fraud"])
+        train_matrix = self.encoder_.transform(train)
+        validation_matrix = self.encoder_.transform(validation)
+        self.classifier_ = LGBMClassifier(
+            objective="binary",
+            n_estimators=self.n_estimators,
+            learning_rate=self.learning_rate,
+            num_leaves=self.num_leaves,
+            max_depth=self.max_depth,
+            min_child_samples=self.min_child_samples,
+            subsample=self.subsample,
+            colsample_bytree=self.colsample_bytree,
+            reg_lambda=self.reg_lambda,
+            class_weight="balanced",
+            random_state=self.random_seed,
+            deterministic=True,
+            force_col_wise=True,
+            n_jobs=1,
+            verbosity=-1,
+        )
+        self.classifier_.fit(
+            train_matrix,
+            train_target,
+            eval_X=validation_matrix,
+            eval_y=validation_target,
+            eval_metric="average_precision",
+            callbacks=[
+                early_stopping(self.early_stopping_rounds, verbose=False),
+                log_evaluation(period=0),
+            ],
+        )
+        self.best_iteration_ = int(self.classifier_.best_iteration_ or self.n_estimators)
+        self.feature_count_ = train_matrix.shape[1]
+        return self
+
+    def score(self, frame: pd.DataFrame) -> np.ndarray:
+        if not hasattr(self, "classifier_"):
+            raise RuntimeError("LightGBMGraphModel must be fitted before scoring")
+        matrix = self.encoder_.transform(frame)
+        return self.classifier_.predict_proba(matrix, num_iteration=self.best_iteration_)[:, 1]
+
+    def feature_importance(self, limit: int = 12) -> list[tuple[str, float]]:
+        if limit <= 0:
+            raise ValueError("Feature-importance limit must be positive")
+        gain = self.classifier_.booster_.feature_importance(importance_type="gain")
+        total = float(gain.sum())
+        normalized = gain / total if total else gain
+        order = np.argsort(normalized)[::-1][:limit]
+        return [(self.encoder_.feature_names_[index], float(normalized[index])) for index in order]

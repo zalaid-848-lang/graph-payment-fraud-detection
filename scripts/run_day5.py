@@ -77,6 +77,8 @@ def _render_report(result: dict[str, Any]) -> str:
         "- Structural features use only earlier transaction-time batches.",
         "- Graph scaling, tabular encoding, class weighting, and model fitting use training "
         "rows only.",
+        "- PageRank snapshot age is retained for audit but excluded from the model because "
+        "refresh cadence is not a fraud behaviour.",
         "- Validation selects thresholds; test labels are used only for this final comparison.",
         "- Direct entity identifiers are excluded from every model matrix.",
         "",
