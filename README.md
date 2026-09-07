@@ -53,12 +53,14 @@ flowchart LR
 - [x] Exhaustive post-test error slices at fixed investigation capacity
 - [x] Fidelity-checked SHAP explanations for the selected model (Day 7)
 - [x] Evidence-gated investigator reason codes and review-only recommendations
-- [ ] Investigator-facing Streamlit dashboard (Day 8)
+- [x] Investigator-facing Streamlit dashboard with focused historical connections (Day 8)
+- [x] Target-free dashboard data contract and reproducible dashboard audit
 
 ## Repository layout
 
 ```text
 graph-payment-fraud-detection/
+├── dashboard/app.py
 ├── configs/project.toml
 ├── data/{raw,interim,processed}/
 ├── docs/
@@ -68,6 +70,7 @@ graph-payment-fraud-detection/
 │   ├── error_analysis.md
 │   ├── label_history_features.md
 │   ├── reason_codes.md
+│   ├── dashboard_guide.md
 │   └── validation_plan.md
 ├── reports/
 │   ├── day2_experiment.md
@@ -75,7 +78,8 @@ graph-payment-fraud-detection/
 │   ├── day4_graph_features.md
 │   ├── day5_model_comparison.md
 │   ├── day6_boosted_error_analysis.md
-│   └── day7_explainability.md
+│   ├── day7_explainability.md
+│   └── day8_dashboard.md
 ├── scripts/
 │   ├── prepare_data.py
 │   ├── run_day2.py
@@ -83,7 +87,8 @@ graph-payment-fraud-detection/
 │   ├── run_day4.py
 │   ├── run_day5.py
 │   ├── run_day6.py
-│   └── run_day7.py
+│   ├── run_day7.py
+│   └── run_day8.py
 ├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
@@ -106,7 +111,9 @@ python scripts/run_day4.py
 python scripts/run_day5.py
 python scripts/run_day6.py
 python scripts/run_day7.py
+python scripts/run_day8.py
 python -m pytest
+python -m streamlit run dashboard/app.py
 ```
 
 On Windows, `activate_windows.ps1` activates the project virtual environment and
@@ -127,8 +134,8 @@ versioned, interview-friendly summary at
 baseline is a transparent, class-balanced logistic regression implemented as a
 scikit-learn `Pipeline`, with preprocessing fitted only on the training period.
 Day 5 keeps the logistic classifier fixed for a controlled graph-feature ablation.
-A boosted-tree candidate will be introduced next, after the incremental graph signal
-has been measured without changing the classifier family.
+Day 6 adds a deterministic LightGBM candidate after measuring the incremental graph
+signal without changing the classifier family.
 
 The controlled logistic ablation and maturity-delayed neighbour-label contract are
 documented in the [Day 5 model comparison](reports/day5_model_comparison.md). The
@@ -140,6 +147,12 @@ institution.
 The [Day 7 report](reports/day7_explainability.md) documents model selection, SHAP
 fidelity, and investigator reason-code coverage. The displayed scores are ranking
 scores rather than calibrated fraud probabilities.
+
+The [Day 8 dashboard guide](docs/dashboard_guide.md) explains the investigator
+workflow and interpretation boundaries. Its focused graph contains only strictly
+earlier transactions linked by specific entities, masks entity values, excludes
+email-domain hubs, and never exposes the evaluation target. The reproducible audit is
+summarized in the [Day 8 report](reports/day8_dashboard.md).
 
 ## Add the real IEEE-CIS data later
 
