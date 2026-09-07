@@ -55,6 +55,8 @@ flowchart LR
 - [x] Evidence-gated investigator reason codes and review-only recommendations
 - [x] Investigator-facing Streamlit dashboard with focused historical connections (Day 8)
 - [x] Target-free dashboard data contract and reproducible dashboard audit
+- [x] Consolidated experiment report, model card, architecture and limitations (Day 9)
+- [x] Evidence-backed documentation audit with interview-safe claims
 
 ## Repository layout
 
@@ -65,10 +67,13 @@ graph-payment-fraud-detection/
 ├── data/{raw,interim,processed}/
 ├── docs/
 │   ├── data_dictionary.md
+│   ├── architecture.md
 │   ├── graph_feature_dictionary.md
 │   ├── graph_schema.md
 │   ├── error_analysis.md
 │   ├── label_history_features.md
+│   ├── limitations.md
+│   ├── model_card.md
 │   ├── reason_codes.md
 │   ├── dashboard_guide.md
 │   └── validation_plan.md
@@ -79,7 +84,9 @@ graph-payment-fraud-detection/
 │   ├── day5_model_comparison.md
 │   ├── day6_boosted_error_analysis.md
 │   ├── day7_explainability.md
-│   └── day8_dashboard.md
+│   ├── day8_dashboard.md
+│   ├── day9_documentation_audit.md
+│   └── experiment_report.md
 ├── scripts/
 │   ├── prepare_data.py
 │   ├── run_day2.py
@@ -88,7 +95,8 @@ graph-payment-fraud-detection/
 │   ├── run_day5.py
 │   ├── run_day6.py
 │   ├── run_day7.py
-│   └── run_day8.py
+│   ├── run_day8.py
+│   └── run_day9.py
 ├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
@@ -112,6 +120,7 @@ python scripts/run_day5.py
 python scripts/run_day6.py
 python scripts/run_day7.py
 python scripts/run_day8.py
+python scripts/run_day9.py
 python -m pytest
 python -m streamlit run dashboard/app.py
 ```
@@ -153,6 +162,13 @@ workflow and interpretation boundaries. Its focused graph contains only strictly
 earlier transactions linked by specific entities, masks entity values, excludes
 email-domain hubs, and never exposes the evaluation target. The reproducible audit is
 summarized in the [Day 8 report](reports/day8_dashboard.md).
+
+The Day 9 documentation package consolidates the project into an interview-ready
+[experiment report](reports/experiment_report.md), [model card](docs/model_card.md),
+[architecture and leakage-boundary guide](docs/architecture.md), and
+[limitations](docs/limitations.md). Its [documentation audit](reports/day9_documentation_audit.md)
+checks that core metrics still match the verified artifacts and that synthetic-data,
+human-review, and suspected-ring boundaries remain explicit.
 
 ## Add the real IEEE-CIS data later
 
