@@ -72,12 +72,16 @@ class EntityLinkGraphBuilder:
 
     graph: nx.Graph = field(default_factory=nx.Graph)
     last_time: int | None = None
+    entity_column_types: dict[str, str] = field(
+        default_factory=lambda: dict(ENTITY_COLUMN_TYPES)
+    )
+    allow_entityless_transactions: bool = False
 
     def add_batch(self, batch: pd.DataFrame) -> None:
         """Add one equal-time batch after consumers have queried prior state."""
         missing = sorted(
             ({"transaction_id", "transaction_time", "amount", "product_code"}
-            | set(ENTITY_COLUMN_TYPES))
+            | set(self.entity_column_types))
             - set(batch.columns)
         )
         if missing:
@@ -94,11 +98,11 @@ class EntityLinkGraphBuilder:
             if transaction_id in self.graph:
                 raise GraphBuildError(f"Duplicate transaction node: {row.transaction_id}")
             entity_nodes: list[tuple[str, NodeId]] = []
-            for column, entity_type in ENTITY_COLUMN_TYPES.items():
+            for column, entity_type in self.entity_column_types.items():
                 node_id = entity_node_id(entity_type, getattr(row, column))
                 if node_id is not None:
                     entity_nodes.append((column, node_id))
-            if not entity_nodes:
+            if not entity_nodes and not self.allow_entityless_transactions:
                 raise GraphBuildError(
                     f"Transaction {row.transaction_id} has no usable graph entities"
                 )

@@ -45,7 +45,9 @@ flowchart LR
 - [x] Capacity-aware evaluation and reproducible Day 2 experiment report
 - [x] Typed entity-link graph construction and integrity audit (Day 3)
 - [x] Causal same-time batching and missing-entity safeguards
-- [ ] Historical graph feature engineering (Day 4)
+- [x] Historical, type-aware graph feature engineering (Day 4)
+- [x] Hub-conscious components, PageRank, and clustering features
+- [ ] Tabular-plus-graph model comparison (Day 5)
 
 ## Repository layout
 
@@ -55,15 +57,18 @@ graph-payment-fraud-detection/
 ├── data/{raw,interim,processed}/
 ├── docs/
 │   ├── data_dictionary.md
+│   ├── graph_feature_dictionary.md
 │   ├── graph_schema.md
 │   └── validation_plan.md
 ├── reports/
 │   ├── day2_experiment.md
-│   └── day3_graph_construction.md
+│   ├── day3_graph_construction.md
+│   └── day4_graph_features.md
 ├── scripts/
 │   ├── prepare_data.py
 │   ├── run_day2.py
-│   └── run_day3.py
+│   ├── run_day3.py
+│   └── run_day4.py
 ├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
@@ -82,6 +87,7 @@ python -m pip install -e ".[dev]"
 python scripts/prepare_data.py --mode synthetic
 python scripts/run_day2.py
 python scripts/run_day3.py
+python scripts/run_day4.py
 python -m pytest
 ```
 
