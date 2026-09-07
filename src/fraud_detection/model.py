@@ -11,6 +11,8 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.metrics import log_loss
 from sklearn.pipeline import Pipeline
 
+from fraud_detection.features import MODEL_GRAPH_FEATURE_COLUMNS
+
 TARGET_ALIASES = {"is_fraud", "isFraud", "target", "label"}
 IDENTIFIER_COLUMNS = {
     "transaction_id",
@@ -36,9 +38,7 @@ AVAILABILITY_FEATURES = (
 def audit_feature_names(feature_names: list[str]) -> None:
     """Fail loudly if a target alias or direct identifier reaches the model."""
     forbidden = [
-        name
-        for name in feature_names
-        if name in TARGET_ALIASES or name in IDENTIFIER_COLUMNS
+        name for name in feature_names if name in TARGET_ALIASES or name in IDENTIFIER_COLUMNS
     ]
     if forbidden:
         raise ValueError(f"Forbidden model features: {', '.join(sorted(forbidden))}")
@@ -92,6 +92,55 @@ class TabularEncoder(BaseEstimator, TransformerMixin):
         return np.column_stack(encoded_parts)
 
 
+class GraphFeatureEncoder(BaseEstimator, TransformerMixin):
+    """Log-transform and standardize graph features using training rows only."""
+
+    def fit(self, frame: pd.DataFrame, target: pd.Series | None = None) -> GraphFeatureEncoder:
+        missing = sorted(set(MODEL_GRAPH_FEATURE_COLUMNS) - set(frame.columns))
+        if missing:
+            raise ValueError(f"Missing graph model features: {', '.join(missing)}")
+        matrix = frame[list(MODEL_GRAPH_FEATURE_COLUMNS)].to_numpy(dtype=float)
+        if not np.isfinite(matrix).all() or (matrix < 0).any():
+            raise ValueError("Graph model features must be finite and non-negative")
+        transformed = np.log1p(matrix)
+        self.means_ = transformed.mean(axis=0)
+        scales = transformed.std(axis=0)
+        self.scales_ = np.where(scales > 0, scales, 1.0)
+        self.feature_names_ = [
+            f"log1p_standardized_{column}" for column in MODEL_GRAPH_FEATURE_COLUMNS
+        ]
+        audit_feature_names(self.feature_names_)
+        return self
+
+    def transform(self, frame: pd.DataFrame) -> np.ndarray:
+        if not hasattr(self, "feature_names_"):
+            raise RuntimeError("GraphFeatureEncoder must be fitted before transform")
+        matrix = frame[list(MODEL_GRAPH_FEATURE_COLUMNS)].to_numpy(dtype=float)
+        if not np.isfinite(matrix).all() or (matrix < 0).any():
+            raise ValueError("Graph model features must be finite and non-negative")
+        return (np.log1p(matrix) - self.means_) / self.scales_
+
+
+class TabularGraphEncoder(BaseEstimator, TransformerMixin):
+    """Combine train-fitted tabular encoding with train-fitted graph scaling."""
+
+    def fit(self, frame: pd.DataFrame, target: pd.Series | None = None) -> TabularGraphEncoder:
+        self.tabular_encoder_ = TabularEncoder().fit(frame, target)
+        self.graph_encoder_ = GraphFeatureEncoder().fit(frame, target)
+        self.feature_names_ = (
+            self.tabular_encoder_.feature_names_ + self.graph_encoder_.feature_names_
+        )
+        audit_feature_names(self.feature_names_)
+        return self
+
+    def transform(self, frame: pd.DataFrame) -> np.ndarray:
+        if not hasattr(self, "feature_names_"):
+            raise RuntimeError("TabularGraphEncoder must be fitted before transform")
+        return np.column_stack(
+            [self.tabular_encoder_.transform(frame), self.graph_encoder_.transform(frame)]
+        )
+
+
 @dataclass
 class TabularBaseline:
     """Train-only encoder plus a class-balanced scikit-learn classifier."""
@@ -102,6 +151,10 @@ class TabularBaseline:
     random_seed: int = 42
 
     def fit(self, frame: pd.DataFrame) -> TabularBaseline:
+        self._fit_with_encoder(frame, TabularEncoder())
+        return self
+
+    def _fit_with_encoder(self, frame: pd.DataFrame, encoder: TransformerMixin) -> None:
         if self.l2_strength <= 0 or self.max_iterations <= 0 or self.tolerance <= 0:
             raise ValueError("Logistic-regression settings must be positive")
         target = frame["is_fraud"].to_numpy(dtype=int)
@@ -110,7 +163,7 @@ class TabularBaseline:
 
         self.pipeline_ = Pipeline(
             steps=[
-                ("encoder", TabularEncoder()),
+                ("encoder", encoder),
                 (
                     "classifier",
                     LogisticRegression(
@@ -140,7 +193,6 @@ class TabularBaseline:
         self.training_loss_ = float(
             log_loss(target, self.score(frame), sample_weight=sample_weight, labels=[0, 1])
         )
-        return self
 
     def score(self, frame: pd.DataFrame) -> np.ndarray:
         if not hasattr(self, "pipeline_"):
@@ -153,3 +205,12 @@ class TabularBaseline:
         return [
             (self.encoder_.feature_names_[index], float(coefficients[index])) for index in order
         ]
+
+
+@dataclass
+class TabularGraphBaseline(TabularBaseline):
+    """The controlled Day 5 ablation: same classifier plus causal graph features."""
+
+    def fit(self, frame: pd.DataFrame) -> TabularGraphBaseline:
+        self._fit_with_encoder(frame, TabularGraphEncoder())
+        return self

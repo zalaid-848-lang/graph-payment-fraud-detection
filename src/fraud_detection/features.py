@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+from collections import defaultdict
 from collections.abc import Iterable
 from dataclasses import dataclass
 from itertools import combinations
@@ -51,6 +52,13 @@ STRUCTURAL_FEATURE_COLUMNS = (
     "pagerank_snapshot_age_batches",
     *PER_TYPE_DEGREE_FEATURES,
 )
+LABEL_HISTORY_FEATURE_COLUMNS = (
+    "matured_neighbor_label_count",
+    "matured_neighbor_fraud_count",
+    "matured_neighbor_fraud_ratio",
+)
+MODEL_GRAPH_FEATURE_COLUMNS = STRUCTURAL_FEATURE_COLUMNS + LABEL_HISTORY_FEATURE_COLUMNS
+TARGET_COLUMN_ALIASES = {"is_fraud", "isFraud", "target", "label"}
 
 
 def _entity_nodes(row: Any, mapping: dict[str, str]) -> list[NodeId]:
@@ -241,3 +249,149 @@ class CausalGraphFeatureBuilder:
             "final_projection_edges": projection.number_of_edges(),
         }
         return result
+
+
+@dataclass
+class MaturedLabelFeatureBuilder:
+    """Build neighbour-label features from delayed training outcomes only."""
+
+    label_maturity_seconds: int = 86_400
+    eligible_label_split: str = "train"
+
+    def build(self, frame: pd.DataFrame) -> pd.DataFrame:
+        if self.label_maturity_seconds < 0:
+            raise ValueError("label_maturity_seconds must be non-negative")
+        required = {
+            "transaction_id",
+            "transaction_time",
+            "split",
+            "is_fraud",
+            *SPECIFIC_ENTITY_COLUMN_TYPES,
+        }
+        missing = sorted(required - set(frame.columns))
+        if missing:
+            raise ValueError(f"Missing label-history columns: {', '.join(missing)}")
+
+        ordered = frame.sort_values(
+            ["transaction_time", "transaction_id"], kind="stable"
+        ).reset_index(drop=True)
+        eligible = ordered[ordered["split"] == self.eligible_label_split].copy()
+        if eligible.empty:
+            raise ValueError(f"No rows found for eligible label split: {self.eligible_label_split}")
+        eligible_labels = eligible["is_fraud"].to_numpy()
+        if not np.isin(eligible_labels, [0, 1]).all():
+            raise ValueError("Eligible historical labels must be binary")
+
+        candidates = list(eligible.itertuples(index=False))
+        candidate_index = 0
+        entity_to_transactions: dict[NodeId, set[str]] = defaultdict(set)
+        matured_labels: dict[str, int] = {}
+        records: list[dict[str, Any]] = []
+
+        for event_time, batch in iter_time_batches(ordered):
+            while candidate_index < len(candidates):
+                candidate = candidates[candidate_index]
+                candidate_time = int(candidate.transaction_time)
+                is_earlier_batch = candidate_time < event_time
+                is_mature = candidate_time + self.label_maturity_seconds <= event_time
+                if not (is_earlier_batch and is_mature):
+                    break
+                transaction_id = str(candidate.transaction_id)
+                matured_labels[transaction_id] = int(candidate.is_fraud)
+                for node in _entity_nodes(candidate, SPECIFIC_ENTITY_COLUMN_TYPES):
+                    entity_to_transactions[node].add(transaction_id)
+                candidate_index += 1
+
+            for row in batch.itertuples(index=False):
+                neighbour_transactions: set[str] = set()
+                for node in _entity_nodes(row, SPECIFIC_ENTITY_COLUMN_TYPES):
+                    neighbour_transactions.update(entity_to_transactions.get(node, set()))
+                fraud_count = sum(matured_labels[value] for value in neighbour_transactions)
+                label_count = len(neighbour_transactions)
+                records.append(
+                    {
+                        "transaction_id": str(row.transaction_id),
+                        "transaction_time": event_time,
+                        "matured_neighbor_label_count": label_count,
+                        "matured_neighbor_fraud_count": fraud_count,
+                        "matured_neighbor_fraud_ratio": (
+                            fraud_count / label_count if label_count else 0.0
+                        ),
+                    }
+                )
+
+        result = pd.DataFrame.from_records(records).reindex(
+            columns=[
+                "transaction_id",
+                "transaction_time",
+                *LABEL_HISTORY_FEATURE_COLUMNS,
+            ]
+        )
+        label_count = result["matured_neighbor_label_count"]
+        fraud_count = result["matured_neighbor_fraud_count"]
+        fraud_ratio = result["matured_neighbor_fraud_ratio"]
+        gates = {
+            "target_columns_absent": not TARGET_COLUMN_ALIASES.intersection(result.columns),
+            "counts_non_negative": bool((label_count >= 0).all() and (fraud_count >= 0).all()),
+            "fraud_count_not_above_label_count": bool((fraud_count <= label_count).all()),
+            "fraud_ratio_bounded": bool(fraud_ratio.between(0, 1).all()),
+        }
+        self.audit_ = {
+            "status": "PASS" if all(gates.values()) else "FAIL",
+            "gates": gates,
+            "row_count": len(result),
+            "feature_count": len(LABEL_HISTORY_FEATURE_COLUMNS),
+            "label_maturity_seconds": self.label_maturity_seconds,
+            "eligible_label_split": self.eligible_label_split,
+            "eligible_label_rows": len(eligible),
+            "matured_label_rows_by_final_batch": len(matured_labels),
+            "non_eligible_labels_ignored": len(ordered) - len(eligible),
+        }
+        return result
+
+
+def attach_graph_features(
+    transactions: pd.DataFrame,
+    structural_features: pd.DataFrame,
+    label_history_features: pd.DataFrame,
+) -> pd.DataFrame:
+    """Validate exact transaction/time alignment and attach both graph tables."""
+
+    result = transactions.copy()
+    result["transaction_id"] = result["transaction_id"].astype(str)
+    expected_ids = set(result["transaction_id"])
+    if result["transaction_id"].duplicated().any():
+        raise ValueError("Transaction source contains duplicate transaction IDs")
+
+    tables = (
+        ("structural", structural_features, STRUCTURAL_FEATURE_COLUMNS),
+        ("label-history", label_history_features, LABEL_HISTORY_FEATURE_COLUMNS),
+    )
+    for name, table, columns in tables:
+        required = {"transaction_id", "transaction_time", *columns}
+        missing = sorted(required - set(table.columns))
+        if missing:
+            raise ValueError(f"Missing {name} feature columns: {', '.join(missing)}")
+        forbidden = sorted(TARGET_COLUMN_ALIASES.intersection(table.columns))
+        if forbidden:
+            raise ValueError(
+                f"Target columns found in {name} feature table: {', '.join(forbidden)}"
+            )
+        prepared = table[["transaction_id", "transaction_time", *columns]].copy()
+        prepared["transaction_id"] = prepared["transaction_id"].astype(str)
+        if prepared["transaction_id"].duplicated().any():
+            raise ValueError(f"Duplicate transaction IDs in {name} feature table")
+        if set(prepared["transaction_id"]) != expected_ids:
+            raise ValueError(f"Transaction IDs do not match in {name} feature table")
+        matrix = prepared[list(columns)].to_numpy(dtype=float)
+        if not np.isfinite(matrix).all() or (matrix < 0).any():
+            raise ValueError(f"Invalid numeric values found in {name} feature table")
+        result = result.merge(
+            prepared,
+            on=["transaction_id", "transaction_time"],
+            how="left",
+            validate="one_to_one",
+        )
+        if result[list(columns)].isna().any().any():
+            raise ValueError(f"Transaction times do not match in {name} feature table")
+    return result

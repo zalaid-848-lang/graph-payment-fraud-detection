@@ -32,7 +32,7 @@ flowchart LR
     J --> K[Human review decision]
 ```
 
-## Day 1 status
+## Implementation status
 
 - [x] Independent local Git repository and project structure
 - [x] Canonical transaction/entity schema and data dictionary
@@ -47,7 +47,9 @@ flowchart LR
 - [x] Causal same-time batching and missing-entity safeguards
 - [x] Historical, type-aware graph feature engineering (Day 4)
 - [x] Hub-conscious components, PageRank, and clustering features
-- [ ] Tabular-plus-graph model comparison (Day 5)
+- [x] Maturity-delayed, training-label-only neighbour features (Day 5)
+- [x] Fair rules/tabular/tabular-plus-graph model comparison
+- [ ] Boosted-tree candidate and error analysis (Day 6)
 
 ## Repository layout
 
@@ -59,16 +61,19 @@ graph-payment-fraud-detection/
 │   ├── data_dictionary.md
 │   ├── graph_feature_dictionary.md
 │   ├── graph_schema.md
+│   ├── label_history_features.md
 │   └── validation_plan.md
 ├── reports/
 │   ├── day2_experiment.md
 │   ├── day3_graph_construction.md
-│   └── day4_graph_features.md
+│   ├── day4_graph_features.md
+│   └── day5_model_comparison.md
 ├── scripts/
 │   ├── prepare_data.py
 │   ├── run_day2.py
 │   ├── run_day3.py
-│   └── run_day4.py
+│   ├── run_day4.py
+│   └── run_day5.py
 ├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
@@ -88,6 +93,7 @@ python scripts/prepare_data.py --mode synthetic
 python scripts/run_day2.py
 python scripts/run_day3.py
 python scripts/run_day4.py
+python scripts/run_day5.py
 python -m pytest
 ```
 
@@ -108,8 +114,14 @@ versioned, interview-friendly summary at
 [`reports/day2_experiment.md`](reports/day2_experiment.md). The current tabular
 baseline is a transparent, class-balanced logistic regression implemented as a
 scikit-learn `Pipeline`, with preprocessing fitted only on the training period.
-LightGBM or XGBoost will be introduced for the graph-feature comparison after the
-core feature table exists.
+Day 5 keeps the logistic classifier fixed for a controlled graph-feature ablation.
+A boosted-tree candidate will be introduced next, after the incremental graph signal
+has been measured without changing the classifier family.
+
+The current three-way results and the maturity-delayed neighbour-label contract are
+documented in the [Day 5 model comparison](reports/day5_model_comparison.md). Reported
+numbers use synthetic development data and demonstrate pipeline behaviour—not expected
+performance at ICICI Bank or any other institution.
 
 ## Add the real IEEE-CIS data later
 
@@ -166,8 +178,8 @@ Models will be compared on PR-AUC, precision and recall at a fixed investigation
 | 2 | Data quality report, rules baseline, tabular preprocessing and baseline |
 | 3 | Entity-link graph construction and graph integrity tests |
 | 4 | Causal structural graph features |
-| 5 | Leakage-safe label-history features and graph-feature model |
-| 6 | Capacity-aware evaluation and error analysis |
+| 5 | Leakage-safe label-history features and controlled graph-feature model comparison |
+| 6 | Boosted-tree candidate, capacity-aware evaluation and error analysis |
 | 7 | Explainability and investigator reason codes |
 | 8 | Streamlit investigation dashboard |
 | 9 | Experiment report, model card, limitations and architecture polish |

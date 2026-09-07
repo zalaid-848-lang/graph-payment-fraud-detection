@@ -29,3 +29,4 @@ investigation_capacity_fraction = 0.05
 include_purge_rows_in_unlabelled_history = true
 pagerank_refresh_batches = 25
 pagerank_alpha = 0.85
+label_maturity_seconds = 86400
