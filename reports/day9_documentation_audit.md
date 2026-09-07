@@ -19,7 +19,7 @@ These are synthetic development results, not expected performance at a bank.
 
 | Document | Path | Characters |
 |---|---|---:|
-| Readme | `README.md` | 11,039 |
+| Readme | `README.md` | 11,970 |
 | Architecture | `docs/architecture.md` | 5,255 |
 | Model Card | `docs/model_card.md` | 7,365 |
 | Limitations | `docs/limitations.md` | 6,821 |

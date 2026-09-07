@@ -57,6 +57,8 @@ flowchart LR
 - [x] Target-free dashboard data contract and reproducible dashboard audit
 - [x] Consolidated experiment report, model card, architecture and limitations (Day 9)
 - [x] Evidence-backed documentation audit with interview-safe claims
+- [x] Ten-slide interview presentation with editable charts and speaker notes (Day 10)
+- [x] Timed demo script, interview Q&A and final delivery audit
 
 ## Repository layout
 
@@ -76,7 +78,14 @@ graph-payment-fraud-detection/
 │   ├── model_card.md
 │   ├── reason_codes.md
 │   ├── dashboard_guide.md
+│   ├── interview_questions.md
 │   └── validation_plan.md
+├── presentation/
+│   ├── assets/
+│   ├── output/graph-payment-fraud-interview-v3.pptx
+│   ├── build_deck.mjs
+│   ├── demo_script.md
+│   └── README.md
 ├── reports/
 │   ├── day2_experiment.md
 │   ├── day3_graph_construction.md
@@ -86,6 +95,7 @@ graph-payment-fraud-detection/
 │   ├── day7_explainability.md
 │   ├── day8_dashboard.md
 │   ├── day9_documentation_audit.md
+│   ├── day10_final_delivery.md
 │   └── experiment_report.md
 ├── scripts/
 │   ├── prepare_data.py
@@ -96,7 +106,8 @@ graph-payment-fraud-detection/
 │   ├── run_day6.py
 │   ├── run_day7.py
 │   ├── run_day8.py
-│   └── run_day9.py
+│   ├── run_day9.py
+│   └── run_day10.py
 ├── src/fraud_detection/
 ├── tests/
 ├── .gitignore
@@ -121,6 +132,7 @@ python scripts/run_day6.py
 python scripts/run_day7.py
 python scripts/run_day8.py
 python scripts/run_day9.py
+python scripts/run_day10.py
 python -m pytest
 python -m streamlit run dashboard/app.py
 ```
@@ -169,6 +181,14 @@ The Day 9 documentation package consolidates the project into an interview-ready
 [limitations](docs/limitations.md). Its [documentation audit](reports/day9_documentation_audit.md)
 checks that core metrics still match the verified artifacts and that synthetic-data,
 human-review, and suspected-ring boundaries remain explicit.
+
+Day 10 completes the core project with the editable
+[interview presentation](presentation/output/graph-payment-fraud-interview-v3.pptx),
+[timed demo script](presentation/demo_script.md), and
+[likely interview questions](docs/interview_questions.md). The
+[final delivery audit](reports/day10_final_delivery.md) verifies the PowerPoint package,
+speaker notes, native charts, embedded chart workbooks, evidence numbers, and responsible-use
+language. Days 11–12 remain optional rehearsal or real-data validation buffer.
 
 ## Add the real IEEE-CIS data later
 

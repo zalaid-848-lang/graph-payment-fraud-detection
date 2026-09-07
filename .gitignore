@@ -11,6 +11,8 @@ htmlcov/
 venv/
 .tmp/
 .pip-cache/
+presentation/.build/
+.chart-data-*/
 
 # Editors and operating systems
 .idea/
